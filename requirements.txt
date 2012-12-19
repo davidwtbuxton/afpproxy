@@ -1,0 +1,3 @@
+# Python 2.5 compatible versions.
+Twisted<12.2
+zope.interface<4
