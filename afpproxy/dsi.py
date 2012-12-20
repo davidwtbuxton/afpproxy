@@ -12,14 +12,23 @@ import struct
 # 4 bytes reserved
 # then the payload, if any
 DSI_HEADER_FMT = '!BBHIII'
-DSI_CMDS = {
-    1: 'CLO',
-    2: 'COM',
-    3: 'STA',
-    4: 'OPE',
-    5: 'TIC',
-    6: 'WRI',
-    8: 'ATT',
+kDSICloseSession = 1
+kDSICommand = 2
+kDSIGetStatus = 3
+kDSIOpenSession = 4
+kDSITickle = 5
+kDSIWrite = 6
+kDSIAttention = 8
+
+# Slightly friendlier names for the command codes.
+DSI_COMMAND_NAMES = {
+    kDSICloseSession: 'CLO',
+    kDSICommand: 'COM',
+    kDSIGetStatus: 'STA',
+    kDSIOpenSession: 'OPE',
+    kDSITickle: 'TIC',
+    kDSIWrite: 'WRI',
+    kDSIAttention: 'ATT',
 }
 
 
@@ -54,7 +63,7 @@ class DSILogger(object):
         self.handler = handler or debug_dsi
         assert callable(self.handler)
         
-    def __call__(self, data):
+    def __call__(self, addr, data):
         assert self.state >= 0
 
         # Handle a complete buffered command.
@@ -63,7 +72,7 @@ class DSILogger(object):
             if text:
                 self.buffer.seek(0)
                 self.buffer.truncate()
-                self.handler(self.dsi, text)
+                self.handler(addr, text, self.dsi)
         
         # Parse and buffer a new command.
         if not self.state:
@@ -79,10 +88,10 @@ class DSILogger(object):
         
         # More than one DSI message in this data.
         if extra:
-            self(extra)
+            self(addr, extra)
 
 
-def debug_dsi(dsi, data):
+def debug_dsi(addr, data, dsi):
     info = dict(dsi)
-    info['command_name'] = DSI_CMDS.get(info['command'])
+    info['command_name'] = DSI_COMMAND_NAMES.get(info['command'])
     logging.debug(info)

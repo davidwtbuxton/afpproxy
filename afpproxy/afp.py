@@ -1,6 +1,7 @@
 import struct
 import logging
 
+
 afp_commands = {
     1: 'FPByteRangeLock', #  - deprecated in AFP3
     2: 'FPCloseVol', # 
@@ -81,7 +82,24 @@ afp_header = struct.Struct(AFP_FMT)
 
 
 class AFPLogger(object):
-    def __call__(self, dsi, data):
-        command_code = afp_header.unpack(data[:1])[0]
-        flag = 'R' if dsi.flags else ' '
-        logging.info('%s%s %s', dsi.request_id, flag, afp_commands.get(command_code, command_code))
+    def __init__(self):
+        self.command_history = {}
+        
+    def __call__(self, addr, data, dsi):
+        key = (dsi.request_id, dsi.command)
+        
+        if dsi.flags:
+            # This is a response.
+            afp_command = self.command_history[key]
+        else:
+            # This is a request.
+            self.command_history[key] = self.parse_afp_command(data)
+        
+        
+    def parse_afp_command(self, data):
+        """Returns a tuple of (int, ...)."""
+        afp_command = afp_header.unpack(data[:1])[0]
+        command_name = afp_commands.get(afp_command, afp_command)
+        logging.debug(command_name)
+        
+    

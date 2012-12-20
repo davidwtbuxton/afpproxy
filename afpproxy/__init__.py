@@ -1,5 +1,6 @@
 __version__ = '0.1'
 from afpproxy.proxy import AFPProxyFactory
+from afpproxy.afp import AFPLogger
 from twisted.internet import reactor
 import logging
 
@@ -26,7 +27,7 @@ def main():
     
     logging.info('Proxy connected to %s port %s', rhost, rport)
     logging.info('Proxy listening on port %s', lport)
-    reactor.listenTCP(lport, AFPProxyFactory(rhost, rport))
+    reactor.listenTCP(lport, AFPProxyFactory(rhost, rport, handler=AFPLogger()))
     reactor.run()
 
 
