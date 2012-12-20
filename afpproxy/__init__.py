@@ -16,7 +16,7 @@ def main():
     rhost = 'localhost'
     rport = 548
     
-    lport = 1548
+    lport = 5548
     
     if len(sys.argv) > 1:
         rhost = sys.argv[1]

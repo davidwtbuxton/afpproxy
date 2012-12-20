@@ -35,6 +35,11 @@ class DSIHeader(object):
         self.length = length
         self.reserved = reserved
     
+    def __iter__(self):
+        # Allows one to use dict() to convert the tuple to a dict.
+        for key in self.__slots__:
+            yield (key, getattr(self, key))
+
     @classmethod
     def unpack(cls, data):
         args = cls.format.unpack(data[:cls.format.size])
@@ -42,12 +47,12 @@ class DSIHeader(object):
 
 
 class DSILogger(object):
-    
-    def __init__(self, prefix=''):
-        self.prefix = prefix
+    def __init__(self, prefix='', handler=None):
         self.dsi = DSIHeader(0, 0, 0, 0, 0, 0)
         self.state = 0
         self.buffer = StringIO()
+        self.handler = handler or debug_dsi
+        assert callable(self.handler)
         
     def __call__(self, data):
         assert self.state >= 0
@@ -58,7 +63,7 @@ class DSILogger(object):
             if text:
                 self.buffer.seek(0)
                 self.buffer.truncate()
-                self.afp_command(text, self.dsi)
+                self.handler(self.dsi, text)
         
         # Parse and buffer a new command.
         if not self.state:
@@ -76,7 +81,8 @@ class DSILogger(object):
         if extra:
             self(extra)
 
-    def afp_command(self, data, dsi):
-        command_code = afp_header.unpack(data[:1])[0]
-        flag = 'R' if dsi.flags else ' '
-        logging.info('%s%s%s %s', self.prefix, dsi.request_id, flag, afp_commands.get(command_code, command_code))
+
+def debug_dsi(dsi, data):
+    info = dict(dsi)
+    info['command_name'] = DSI_CMDS.get(info['command'])
+    logging.debug(info)

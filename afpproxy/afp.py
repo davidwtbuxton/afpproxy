@@ -1,5 +1,5 @@
 import struct
-
+import logging
 
 afp_commands = {
     1: 'FPByteRangeLock', #  - deprecated in AFP3
@@ -78,3 +78,10 @@ afp_commands = {
 
 AFP_FMT = '!B'
 afp_header = struct.Struct(AFP_FMT)
+
+
+class AFPLogger(object):
+    def __call__(self, dsi, data):
+        command_code = afp_header.unpack(data[:1])[0]
+        flag = 'R' if dsi.flags else ' '
+        logging.info('%s%s %s', dsi.request_id, flag, afp_commands.get(command_code, command_code))
