@@ -93,5 +93,10 @@ class DSILogger(object):
 
 def debug_dsi(addr, data, dsi):
     info = dict(dsi)
-    info['command_name'] = DSI_COMMAND_NAMES.get(info['command'])
+    info.update({
+        'command_name': DSI_COMMAND_NAMES.get(info['command']),
+        'address': addr[0],
+        'port': addr[1],
+    })
+
     logging.debug(info)

@@ -27,7 +27,7 @@ def main():
     
     logging.info('Proxy connected to %s port %s', rhost, rport)
     logging.info('Proxy listening on port %s', lport)
-    reactor.listenTCP(lport, AFPProxyFactory(rhost, rport, handler=AFPLogger()))
+    reactor.listenTCP(lport, AFPProxyFactory(rhost, rport))
     reactor.run()
 
 
