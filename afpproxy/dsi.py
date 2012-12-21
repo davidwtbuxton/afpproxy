@@ -1,4 +1,3 @@
-from .afp import afp_header, afp_commands
 from cStringIO import StringIO
 import logging
 import struct
