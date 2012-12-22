@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 import struct
 import logging
+from . import constants
 
 
 # Map of AFP command code to function name, request format, response format.
@@ -95,9 +97,6 @@ class BadNameError(Exception):
 
 
 class AFPName(object):
-    kFPShortName = 1
-    kFPLongName = 2
-    kFPUTF8Name = 3
     # 1 byte type, 4 byte encoding, 2 byte length
     UTF8Name = struct.Struct('!BIH')
     # 1 byte type, 1 byte length
@@ -111,11 +110,11 @@ class AFPName(object):
             raise BadNameError
         
         try:
-            if name_type == self.kFPUTF8Name:
+            if name_type == constants.kFPUTF8Name:
                 name_type, encoding, length = self.UTF8Name.unpack(data[:self.UTF8Name.size])
                 offset = self.UTF8Name.size + length
                 parts = struct.unpack('!BIH%ss' % length, data[:offset])
-            elif name_type in (self.kFPShortName, self.kFPLongName):
+            elif name_type in (constants.kFPShortName, constants.kFPLongName):
                 name_type, length = self.PascalName.unpack(data[:self.PascalName.size])
                 offset = self.PascalName.size + length
                 parts = struct.unpack('!B%sp' % length, data[:offset])
