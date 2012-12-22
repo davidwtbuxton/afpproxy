@@ -6,7 +6,8 @@ import logging
 
 
 def configure_logging():
-    logging.basicConfig(level=logging.DEBUG)
+    format = '%(asctime)s %(message)s'
+    logging.basicConfig(level=logging.DEBUG, format=format)
 
 
 def main():
@@ -27,7 +28,7 @@ def main():
     
     logging.info('Proxy connected to %s port %s', rhost, rport)
     logging.info('Proxy listening on port %s', lport)
-    reactor.listenTCP(lport, AFPProxyFactory(rhost, rport))
+    reactor.listenTCP(lport, AFPProxyFactory(rhost, rport, handler=AFPLogger()))
     reactor.run()
 
 
