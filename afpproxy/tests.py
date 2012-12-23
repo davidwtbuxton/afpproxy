@@ -26,5 +26,12 @@ class AFPNameTests(unittest.TestCase):
         assert len(data) == 0
 
 
+class StructWithNamesTests(unittest.TestCase):
+    def test_basic(self):
+        s = afp.StructWithNames('!BIH')
+        result = s.unpack('\x03\x00\x00\x04\xd2\x04\xd2')
+        assert result == (3, 1234, 1234)
+
+
 if __name__ == "__main__":
     unittest.main()

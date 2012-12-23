@@ -132,7 +132,59 @@ class AFPName(object):
 
 take_name = AFPName()
 
+
+class StructWithNames(object):
+    """Pretends to be a Struct that supports a new format specifier, N, which
+    is a variable length AFPName structure.
+    """
+    def __init__(self, format):
+        self.format = format
+        self._spec = 'N'
+        self._unpackers = self._compile(self._spec, self.format)
     
+    def unpack(self, data):
+        """Applies each of the structs to the data and returns a new tuple
+        combining all the parts.
+        """
+        all_parts = []
+        for func in self._unpackers:
+            if isinstance(func, AFPName):
+                name, data = func(data)
+                parts = (name,)
+            else:
+                parts = func.unpack(data[:func.size])
+                data = data[func.size:]
+            all_parts.extend(parts)
+        return tuple(all_parts)
+        
+    def _compile(self, spec, format):
+        """Returns a list of Struct.unpack methods or AFPName instances."""
+        formats = self._split(spec, format)
+        
+        unpack_funcs = []
+        for format in formats:
+            func = take_name if format == spec else struct.Struct(format)
+            unpack_funcs.append(func)
+        
+        return unpack_funcs
+    
+    @staticmethod
+    def _split(spec, format):
+        """Returns a list of struct format strings mixed with 'N' strings."""
+        parts = []
+    
+        while spec in format:
+            head, sep, format = format.partition(spec)
+            if head:
+                parts.append(head)
+            parts.append(sep)
+        
+        if format:
+            parts.append(format)
+    
+        return parts
+
+
 class AFPLogger(object):
     # Pre-cook a map of AFP command codes to Struct instances.
     _request_formats = dict(compile_commands())
