@@ -1,6 +1,9 @@
+from __future__ import absolute_import
 from cStringIO import StringIO
 import logging
 import struct
+from .constants import (kDSICloseSession, kDSICommand, kDSIGetStatus,
+    kDSIOpenSession, kDSITickle, kDSIWrite, kDSIAttention)
 
 # DSI format is 16 bytes
 # 1 byte request/response flag
@@ -11,13 +14,6 @@ import struct
 # 4 bytes reserved
 # then the payload, if any
 DSI_HEADER_FMT = '!BBHIII'
-kDSICloseSession = 1
-kDSICommand = 2
-kDSIGetStatus = 3
-kDSIOpenSession = 4
-kDSITickle = 5
-kDSIWrite = 6
-kDSIAttention = 8
 
 # Slightly friendlier names for the command codes.
 DSI_COMMAND_NAMES = {
@@ -47,6 +43,11 @@ class DSIHeader(object):
         # Allows one to use dict() to convert the tuple to a dict.
         for key in self.__slots__:
             yield (key, getattr(self, key))
+
+    @property
+    def error(self):
+        # Alias for offset
+        return self.offset
 
     @classmethod
     def unpack(cls, data):
