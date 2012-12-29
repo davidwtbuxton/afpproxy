@@ -14,23 +14,27 @@ kFPLongName = 2
 kFPUTF8Name = 3
 
 # AFP version strings, used in FPLogin
-kAFPVersion_2_1 = "AFPVersion 2.1"
-kAFPVersion_2_2 = "AFP2.2"
-kAFPVersion_2_3 = "AFP2.3"
-kAFPVersion_3_0 = "AFPX03"
-kAFPVersion_3_1 = "AFP3.1"
-kAFPVersion_3_2 = "AFP3.2"
-kAFPVersion_3_3 = "AFP3.3"
+afp_versions = {
+    'AFPVersion 2.1': 'kAFPVersion_2_1',
+    'AFP2.2': 'kAFPVersion_2_2',
+    'AFP2.3': 'kAFPVersion_2_3',
+    'AFPX03': 'kAFPVersion_3_0',
+    'AFP3.1': 'kAFPVersion_3_1',
+    'AFP3.2': 'kAFPVersion_3_2',
+    'AFP3.3': 'kAFPVersion_3_3',
+}
 
-# AFP UAM strings
-kNoUserAuthStr = "No User Authent"
-kClearTextUAMStr = "Cleartxt Passwrd"
-kRandNumUAMStr = "Randnum Exchange"
-kTwoWayRandNumUAMStr = "2-Way Randnum"
-kDHCAST128UAMStr = "DHCAST128"
-kDHX2UAMStr = "DHX2"
-kKerberosUAMStr = "Client Krb v2"
-kReconnectUAMStr = "Recon1"
+# AFP UAM strings, used in FPLogin/FPLoginExt
+afp_uams = {
+    'No User Authent': 'kNoUserAuthStr',
+    'Cleartxt Passwrd': 'kClearTextUAMStr',
+    'Randnum Exchange': 'kRandNumUAMStr',
+    '2-Way Randnum': 'kTwoWayRandNumUAMStr',
+    'DHCAST128': 'kDHCAST128UAMStr',
+    'DHX2': 'kDHX2UAMStr',
+    'Client Krb v2': 'kKerberosUAMStr',
+    'Recon1': 'kReconnectUAMStr',
+}
 
 # AFP text encodings
 encodings = {

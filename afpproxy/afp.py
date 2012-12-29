@@ -24,13 +24,17 @@ class AFPLogger(object):
                 command_code = self._command_history[key][0]
                 
                 if dsi.error:
-                    # Error!
-                    errname = constants.errors[dsi.error]
-                    logging.debug("%r %r %r", key, dsi.error, errname)
+                    # Error! I might be very wrong but though the docs say this
+                    # is uint32 it is actually a signed int. Meanwhile the same
+                    # field is used for the write offset on requests and that
+                    # time it actually is uint32.
+                    error = struct.unpack('!i', struct.pack('!I', dsi.error))[0]
+                    errname = constants.errors.get(error, error)
+                    logging.debug("%r %r %r", key, error, errname)
                 else:
                     # Now we have the request we can understand the response.
                     response = self.response(command_code, data)
-                logging.debug("%r %r", key, response)
+                    logging.debug("%r %r", key, response)
             else:
                 # This is a request.
                 command_code = self._command_code.unpack(data[:1])[0]

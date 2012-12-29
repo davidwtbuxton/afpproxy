@@ -1,9 +1,16 @@
 from __future__ import absolute_import
 from . import constants
 import struct
+import logging
 """You can list all the available commands using this module's afp_commands
 attribute which is built from the list of classes.
 """
+
+# Basic Python 2.5 version of built-in next(). Doesn't support sending in values.
+try:
+    next
+except NameError:
+    next = lambda x: x.next()
 
 
 class _AFPCommand(object):
@@ -182,8 +189,11 @@ class FPLogin(_AFPCommand):
 
 class FPLoginCont(_AFPCommand):
     code = 19
+    _request = struct.Struct('!BBh')
+    
     def request(self, data):
-        pass
+        command_code, pad, number = self._request.unpack(data[:self._request.size])
+        return command_code, number, '+%d bytes' % len(data[self._request.size:])
 
     def response(self, data):
         pass
@@ -192,8 +202,11 @@ class FPLoginCont(_AFPCommand):
 
 class FPLogout(_AFPCommand):
     code = 20
+    _request = struct.Struct('!BB')
+    
     def request(self, data):
-        pass
+        command_code, pad = self._request.unpack(data[:self._request.size])
+        return (command_code,)
 
     def response(self, data):
         pass
@@ -362,8 +375,12 @@ class FPChangePassword(_AFPCommand):
 
 class FPGetUserInfo(_AFPCommand):
     code = 37
+    _request = struct.Struct('!BBih')
+    
     def request(self, data):
-        pass
+        size = self._request.size
+        command, flags, userid, bitmap = self._request.unpack(data[:size])
+        return command, flags, userid, bitmap
 
     def response(self, data):
         pass
@@ -562,8 +579,38 @@ class FPGetAuthMethods(_AFPCommand):
 
 class FPLoginExt(_AFPCommand):
     code = 63
+    _request = struct.Struct('!BBh')
+    
     def request(self, data):
-        pass
+        # Set everything to None at first.
+        command_code = flags = version = uam = user = path = info = None
+        
+        start, data = data[:self._request.size], data[self._request.size:]
+        command_code, pad, flags = self._request.unpack(start)
+        
+        assert data
+        
+        # Next is the ASCII version string. First byte is length.
+        size = struct.unpack('!B', data[:1])[0]
+        version_string, data = data[1: size + 1], data[size + 1:]
+        version = constants.afp_versions.get(version_string, version_string)
+        
+        # Next is the ASCII UAM string.First byte is length again.
+        size = struct.unpack('!B', data[:1])[0]
+        uam_string, data = data[1: size + 1], data[size + 1:]
+        uam = constants.afp_uams.get(uam_string, uam_string)
+        
+        # Next is the user login name with AFPName format
+        user, data = take_name(data)
+        
+        # Next is the Open Directory domain to search for the given username.
+        path, data = take_name(data)
+        
+        # Next is the UAM info. May be a null byte. Or may be the padding to
+        # put the UAM on an even byte. How do I know if a pad byte was needed?
+        # For now we ignore UAM info.       
+        
+        return (command_code, flags, version, uam, user, path, info)
 
     def response(self, data):
         pass
@@ -572,8 +619,10 @@ class FPLoginExt(_AFPCommand):
 
 class FPGetSessionToken(_AFPCommand):
     code = 64
+    _request = struct.Struct('!BBh')
     def request(self, data):
-        pass
+        command, pad, type_ = self._request.unpack(data[:self._request.size])
+        return command, pad, type_
 
     def response(self, data):
         pass
@@ -752,23 +801,26 @@ class AFPName(object):
     def __call__(self, data):
         # All name types start with a byte indicating the type.
         try:
-            name_type = struct.unpack('!B', data[:1])[0]
+            name_type, byte2, byte3 = struct.unpack('!BBB', data[:3])
+            # Zero-length names are just 2 null bytes.
+            if byte2 == 0 and byte3 == 0:
+                return '', data[:3]
         except struct.error:
             raise BadNameError
         
-        try:
-            if name_type == constants.kFPUTF8Name:
-                name_type, encoding, length = self.UTF8Name.unpack(data[:self.UTF8Name.size])
-                offset = self.UTF8Name.size + length
-                parts = struct.unpack('!BIH%ss' % length, data[:offset])
-            elif name_type in (constants.kFPShortName, constants.kFPLongName):
-                name_type, length = self.PascalName.unpack(data[:self.PascalName.size])
-                offset = self.PascalName.size + length
-                parts = struct.unpack('!B%sp' % length, data[:offset])
-            else:
-                raise BadNameError
-        except struct.error:
+#        try:
+        if name_type == constants.kFPUTF8Name:
+            name_type, encoding, length = self.UTF8Name.unpack(data[:self.UTF8Name.size])
+            offset = self.UTF8Name.size + length
+            parts = struct.unpack('!BIH%ss' % length, data[:offset])
+        elif name_type in (constants.kFPShortName, constants.kFPLongName):
+            name_type, length = self.PascalName.unpack(data[:self.PascalName.size])
+            offset = self.PascalName.size + length
+            parts = struct.unpack('!B%sp' % length, data[:offset])
+        else:
             raise BadNameError
+#        except struct.error:
+#            raise BadNameError
         
         # AFP uses null-bytes in the path name as a directory separator.
         name = parts[-1].replace(chr(0), ':')
