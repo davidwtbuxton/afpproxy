@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from . import constants
+from datetime import datetime, timedelta
 import struct
 import logging
 """You can list all the available commands using this module's afp_commands
@@ -156,15 +157,26 @@ class FPGetSrvrInfo(_AFPCommand):
         pass
 
 
-
 class FPGetSrvrParms(_AFPCommand):
     code = 16
+    _request = struct.Struct('!BB')
+    # Docs say the second field is int16, but it seems to be a single byte
+    _response = struct.Struct('!iB')
+    
     def request(self, data):
-        pass
+        return self._request.unpack(data[:self._request.size])
 
     def response(self, data):
-        pass
-
+        time, count = self._response.unpack(data[:self._response.size])
+        data = data[self._response.size:]
+        volumes = []
+        
+        for _ in range(count):
+            flags = struct.unpack('!B', data[:1])[0]
+            name, data = take_string(data[1:])
+            volumes.append((flags, name))
+        
+        return afp_datetime(time), count, tuple(volumes)
 
 
 class FPGetVolParms(_AFPCommand):
@@ -591,13 +603,11 @@ class FPLoginExt(_AFPCommand):
         assert data
         
         # Next is the ASCII version string. First byte is length.
-        size = struct.unpack('!B', data[:1])[0]
-        version_string, data = data[1: size + 1], data[size + 1:]
+        version_string, data = take_string(data)
         version = constants.afp_versions.get(version_string, version_string)
         
         # Next is the ASCII UAM string.First byte is length again.
-        size = struct.unpack('!B', data[:1])[0]
-        uam_string, data = data[1: size + 1], data[size + 1:]
+        uam_string, data = take_string(data)
         uam = constants.afp_uams.get(uam_string, uam_string)
         
         # Next is the user login name with AFPName format
@@ -830,6 +840,25 @@ class AFPName(object):
 
 
 take_name = AFPName()
+
+
+def take_string(data):
+    """Returns a string and the remaining data. The first byte is the size of
+    the string.
+    """
+    count = struct.unpack('!B', data[:1])[0]
+    fmt = struct.Struct('!B%ds' % count)
+    count, name = fmt.unpack(data[:fmt.size])
+    return name, data[fmt.size:]
+
+
+#: AFP uses seconds since midnight 2000-01-01.
+afp_epoch = datetime(2000, 1, 1, 0, 0, 0)
+
+
+def afp_datetime(seconds):
+    """Make a datetime from an AFP time value."""
+    return afp_epoch + timedelta(seconds=seconds)
 
 
 def make_command_map():
