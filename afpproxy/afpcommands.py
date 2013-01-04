@@ -31,7 +31,7 @@ class _AFPCommand(object):
 class FPByteRangeLock(_AFPCommand):
     code = 1
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -41,7 +41,7 @@ class FPByteRangeLock(_AFPCommand):
 class FPCloseVol(_AFPCommand):
     code = 2
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -51,7 +51,7 @@ class FPCloseVol(_AFPCommand):
 class FPCloseDir(_AFPCommand):
     code = 3
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -61,7 +61,7 @@ class FPCloseDir(_AFPCommand):
 class FPCloseFork(_AFPCommand):
     code = 4
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -71,7 +71,7 @@ class FPCloseFork(_AFPCommand):
 class FPCopyFile(_AFPCommand):
     code = 5
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -81,7 +81,7 @@ class FPCopyFile(_AFPCommand):
 class FPCreateDir(_AFPCommand):
     code = 6
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -91,7 +91,7 @@ class FPCreateDir(_AFPCommand):
 class FPCreateFile(_AFPCommand):
     code = 7
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -101,7 +101,7 @@ class FPCreateFile(_AFPCommand):
 class FPDelete(_AFPCommand):
     code = 8
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -111,7 +111,7 @@ class FPDelete(_AFPCommand):
 class FPEnumerate(_AFPCommand):
     code = 9
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -121,7 +121,7 @@ class FPEnumerate(_AFPCommand):
 class FPFlush(_AFPCommand):
     code = 10
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -131,7 +131,7 @@ class FPFlush(_AFPCommand):
 class FPFlushFork(_AFPCommand):
     code = 11
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -141,7 +141,7 @@ class FPFlushFork(_AFPCommand):
 class FPGetForkParms(_AFPCommand):
     code = 14
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -151,7 +151,7 @@ class FPGetForkParms(_AFPCommand):
 class FPGetSrvrInfo(_AFPCommand):
     code = 15
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -159,7 +159,8 @@ class FPGetSrvrInfo(_AFPCommand):
 
 class FPGetSrvrParms(_AFPCommand):
     code = 16
-    _request = struct.Struct('!BB')
+    # Docs says there is a pad byte, but doesn't always seem to be there.
+    _request = struct.Struct('!B')
     # Docs say the second field is int16, but it seems to be a single byte
     _response = struct.Struct('!iB')
     
@@ -182,7 +183,7 @@ class FPGetSrvrParms(_AFPCommand):
 class FPGetVolParms(_AFPCommand):
     code = 17
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -192,7 +193,7 @@ class FPGetVolParms(_AFPCommand):
 class FPLogin(_AFPCommand):
     code = 18
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -228,7 +229,7 @@ class FPLogout(_AFPCommand):
 class FPMapID(_AFPCommand):
     code = 21
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -238,7 +239,7 @@ class FPMapID(_AFPCommand):
 class FPMapName(_AFPCommand):
     code = 22
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -248,7 +249,7 @@ class FPMapName(_AFPCommand):
 class FPMoveAndRename(_AFPCommand):
     code = 23
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -257,8 +258,12 @@ class FPMoveAndRename(_AFPCommand):
 
 class FPOpenVol(_AFPCommand):
     code = 24
+    _request = struct.Struct('!BBh')
+    
     def request(self, data):
-        pass
+        command, pad, bitmap = self._request.unpack(data[:self._request.size])
+        name, data = take_string(data[self._request.size:])
+        return command, bitmap, name
 
     def response(self, data):
         pass
@@ -268,7 +273,7 @@ class FPOpenVol(_AFPCommand):
 class FPOpenDir(_AFPCommand):
     code = 25
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -278,7 +283,7 @@ class FPOpenDir(_AFPCommand):
 class FPOpenFork(_AFPCommand):
     code = 26
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -288,7 +293,7 @@ class FPOpenFork(_AFPCommand):
 class FPRead(_AFPCommand):
     code = 27
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -298,7 +303,7 @@ class FPRead(_AFPCommand):
 class FPRename(_AFPCommand):
     code = 28
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -308,7 +313,7 @@ class FPRename(_AFPCommand):
 class FPSetDirParms(_AFPCommand):
     code = 29
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -318,7 +323,7 @@ class FPSetDirParms(_AFPCommand):
 class FPSetFileParms(_AFPCommand):
     code = 30
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -328,7 +333,7 @@ class FPSetFileParms(_AFPCommand):
 class FPSetForkParms(_AFPCommand):
     code = 31
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -338,7 +343,7 @@ class FPSetForkParms(_AFPCommand):
 class FPSetVolParms(_AFPCommand):
     code = 32
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -348,7 +353,7 @@ class FPSetVolParms(_AFPCommand):
 class FPWrite(_AFPCommand):
     code = 33
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -357,8 +362,11 @@ class FPWrite(_AFPCommand):
 
 class FPGetFileDirParms(_AFPCommand):
     code = 34
+    _request = struct.Struct('!BBhihh')
+    
     def request(self, data):
-        pass
+        parts = self._request.unpack(data[:self._request.size])
+        return parts
 
     def response(self, data):
         pass
@@ -368,7 +376,7 @@ class FPGetFileDirParms(_AFPCommand):
 class FPSetFileDirParms(_AFPCommand):
     code = 35
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -378,7 +386,7 @@ class FPSetFileDirParms(_AFPCommand):
 class FPChangePassword(_AFPCommand):
     code = 36
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -402,7 +410,7 @@ class FPGetUserInfo(_AFPCommand):
 class FPGetSrvrMsg(_AFPCommand):
     code = 38
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -412,7 +420,7 @@ class FPGetSrvrMsg(_AFPCommand):
 class FPCreateId(_AFPCommand):
     code = 39
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -422,7 +430,7 @@ class FPCreateId(_AFPCommand):
 class FPDeleteID(_AFPCommand):
     code = 40
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -432,7 +440,7 @@ class FPDeleteID(_AFPCommand):
 class FPResolveID(_AFPCommand):
     code = 41
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -442,7 +450,7 @@ class FPResolveID(_AFPCommand):
 class FPExchangeFiles(_AFPCommand):
     code = 42
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -452,7 +460,7 @@ class FPExchangeFiles(_AFPCommand):
 class FPCatSearch(_AFPCommand):
     code = 43
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -462,7 +470,7 @@ class FPCatSearch(_AFPCommand):
 class FPOpenDT(_AFPCommand):
     code = 48
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -472,7 +480,7 @@ class FPOpenDT(_AFPCommand):
 class FPCloseDT(_AFPCommand):
     code = 49
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -482,7 +490,7 @@ class FPCloseDT(_AFPCommand):
 class FPGetIcon(_AFPCommand):
     code = 51
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -492,7 +500,7 @@ class FPGetIcon(_AFPCommand):
 class FPAddAPPL(_AFPCommand):
     code = 53
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -502,7 +510,7 @@ class FPAddAPPL(_AFPCommand):
 class FPRemoveAPPL(_AFPCommand):
     code = 54
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -512,7 +520,7 @@ class FPRemoveAPPL(_AFPCommand):
 class FPGetAPPL(_AFPCommand):
     code = 55
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -522,7 +530,7 @@ class FPGetAPPL(_AFPCommand):
 class FPAddComment(_AFPCommand):
     code = 56
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -532,7 +540,7 @@ class FPAddComment(_AFPCommand):
 class FPRemoveComment(_AFPCommand):
     code = 57
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -542,7 +550,7 @@ class FPRemoveComment(_AFPCommand):
 class FPGetComment(_AFPCommand):
     code = 58
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -552,7 +560,7 @@ class FPGetComment(_AFPCommand):
 class FPByteRangeLockExt(_AFPCommand):
     code = 59
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -562,7 +570,7 @@ class FPByteRangeLockExt(_AFPCommand):
 class FPReadExt(_AFPCommand):
     code = 60
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -572,7 +580,7 @@ class FPReadExt(_AFPCommand):
 class FPWriteExt(_AFPCommand):
     code = 61
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -582,7 +590,7 @@ class FPWriteExt(_AFPCommand):
 class FPGetAuthMethods(_AFPCommand):
     code = 62
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -610,8 +618,14 @@ class FPLoginExt(_AFPCommand):
         uam_string, data = take_string(data)
         uam = constants.afp_uams.get(uam_string, uam_string)
         
-        # Next is the user login name with AFPName format
-        user, data = take_name(data)
+        logging.debug('data: %r', data)
+        # Next is the user login name but it is always UTF-8 and the docs say
+        # it is an AFPName but it is actually just 2 bytes for the length
+        # followed by the string
+        _, size = struct.unpack('!Bh', data[:3])
+        data = data[3:]
+        name = struct.unpack('!%ss' % size, data[:size])[0]
+        data = data[size:]
         
         # Next is the Open Directory domain to search for the given username.
         path, data = take_name(data)
@@ -632,7 +646,7 @@ class FPGetSessionToken(_AFPCommand):
     _request = struct.Struct('!BBh')
     def request(self, data):
         command, pad, type_ = self._request.unpack(data[:self._request.size])
-        return command, pad, type_
+        return command, type_
 
     def response(self, data):
         pass
@@ -642,7 +656,7 @@ class FPGetSessionToken(_AFPCommand):
 class FPDisconnectOldSession(_AFPCommand):
     code = 65
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -652,7 +666,7 @@ class FPDisconnectOldSession(_AFPCommand):
 class FPEnumerateExt(_AFPCommand):
     code = 66
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -662,7 +676,7 @@ class FPEnumerateExt(_AFPCommand):
 class FPCatSearchExt(_AFPCommand):
     code = 67
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -672,7 +686,7 @@ class FPCatSearchExt(_AFPCommand):
 class FPEnumerateExt2(_AFPCommand):
     code = 68
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -682,7 +696,7 @@ class FPEnumerateExt2(_AFPCommand):
 class FPGetExtAttr(_AFPCommand):
     code = 69
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -692,7 +706,7 @@ class FPGetExtAttr(_AFPCommand):
 class FPSetExtAttr(_AFPCommand):
     code = 70
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -702,7 +716,7 @@ class FPSetExtAttr(_AFPCommand):
 class FPRemoveExtAttr(_AFPCommand):
     code = 71
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -712,7 +726,7 @@ class FPRemoveExtAttr(_AFPCommand):
 class FPListExtAttrs(_AFPCommand):
     code = 72
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -722,7 +736,7 @@ class FPListExtAttrs(_AFPCommand):
 class FPGetACL(_AFPCommand):
     code = 73
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -732,7 +746,7 @@ class FPGetACL(_AFPCommand):
 class FPSetACL(_AFPCommand):
     code = 74
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -742,7 +756,7 @@ class FPSetACL(_AFPCommand):
 class FPAccess(_AFPCommand):
     code = 75
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -752,7 +766,7 @@ class FPAccess(_AFPCommand):
 class FPSpotlightRPC(_AFPCommand):
     code = 76
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -762,7 +776,7 @@ class FPSpotlightRPC(_AFPCommand):
 class FPSyncDir(_AFPCommand):
     code = 78
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -772,7 +786,7 @@ class FPSyncDir(_AFPCommand):
 class FPSyncFork(_AFPCommand):
     code = 79
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -782,7 +796,7 @@ class FPSyncFork(_AFPCommand):
 class FPZzzzz(_AFPCommand):
     code = 122
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -792,7 +806,7 @@ class FPZzzzz(_AFPCommand):
 class FPAddIcon(_AFPCommand):
     code = 192
     def request(self, data):
-        pass
+        return struct.unpack('!B', data[:1])
 
     def response(self, data):
         pass
@@ -822,6 +836,7 @@ class AFPName(object):
         if name_type == constants.kFPUTF8Name:
             name_type, encoding, length = self.UTF8Name.unpack(data[:self.UTF8Name.size])
             offset = self.UTF8Name.size + length
+            logging.debug('name_type: %r, encoding: %r, length: %r', name_type, encoding, length)
             parts = struct.unpack('!BIH%ss' % length, data[:offset])
         elif name_type in (constants.kFPShortName, constants.kFPLongName):
             name_type, length = self.PascalName.unpack(data[:self.PascalName.size])
