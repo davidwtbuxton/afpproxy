@@ -1,8 +1,11 @@
 from __future__ import absolute_import
-from . import constants
 from datetime import datetime, timedelta
 import struct
 import logging
+
+from . import constants
+
+
 """You can list all the available commands using this module's afp_commands
 attribute which is built from the list of classes.
 """
@@ -23,7 +26,7 @@ class _AFPCommand(object):
         integer command code.
         """
         raise NotImplementedError
-    
+
     def response(self, data):
         raise NotImplementedError
 
@@ -163,7 +166,7 @@ class FPGetSrvrParms(_AFPCommand):
     _request = struct.Struct('!B')
     # Docs say the second field is int16, but it seems to be a single byte
     _response = struct.Struct('!iB')
-    
+
     def request(self, data):
         return self._request.unpack(data[:self._request.size])
 
@@ -171,12 +174,12 @@ class FPGetSrvrParms(_AFPCommand):
         time, count = self._response.unpack(data[:self._response.size])
         data = data[self._response.size:]
         volumes = []
-        
+
         for _ in range(count):
             flags = struct.unpack('!B', data[:1])[0]
             name, data = take_string(data[1:])
             volumes.append((flags, name))
-        
+
         return afp_datetime(time), count, tuple(volumes)
 
 
@@ -203,7 +206,7 @@ class FPLogin(_AFPCommand):
 class FPLoginCont(_AFPCommand):
     code = 19
     _request = struct.Struct('!BBh')
-    
+
     def request(self, data):
         command_code, pad, number = self._request.unpack(data[:self._request.size])
         return command_code, number, '+%d bytes' % len(data[self._request.size:])
@@ -215,10 +218,11 @@ class FPLoginCont(_AFPCommand):
 
 class FPLogout(_AFPCommand):
     code = 20
-    _request = struct.Struct('!BB')
-    
+    # Docs say there is a pad byte. Sometimes there ain't.
+    _request = struct.Struct('!B')
+
     def request(self, data):
-        command_code, pad = self._request.unpack(data[:self._request.size])
+        command_code = self._request.unpack(data[:self._request.size])[0]
         return (command_code,)
 
     def response(self, data):
@@ -259,7 +263,7 @@ class FPMoveAndRename(_AFPCommand):
 class FPOpenVol(_AFPCommand):
     code = 24
     _request = struct.Struct('!BBh')
-    
+
     def request(self, data):
         command, pad, bitmap = self._request.unpack(data[:self._request.size])
         name, data = take_string(data[self._request.size:])
@@ -363,7 +367,7 @@ class FPWrite(_AFPCommand):
 class FPGetFileDirParms(_AFPCommand):
     code = 34
     _request = struct.Struct('!BBhihh')
-    
+
     def request(self, data):
         parts = self._request.unpack(data[:self._request.size])
         return parts
@@ -396,7 +400,7 @@ class FPChangePassword(_AFPCommand):
 class FPGetUserInfo(_AFPCommand):
     code = 37
     _request = struct.Struct('!BBih')
-    
+
     def request(self, data):
         size = self._request.size
         command, flags, userid, bitmap = self._request.unpack(data[:size])
@@ -600,24 +604,24 @@ class FPGetAuthMethods(_AFPCommand):
 class FPLoginExt(_AFPCommand):
     code = 63
     _request = struct.Struct('!BBh')
-    
+
     def request(self, data):
         # Set everything to None at first.
         command_code = flags = version = uam = user = path = info = None
-        
+
         start, data = data[:self._request.size], data[self._request.size:]
         command_code, pad, flags = self._request.unpack(start)
-        
+
         assert data
-        
+
         # Next is the ASCII version string. First byte is length.
         version_string, data = take_string(data)
         version = constants.afp_versions.get(version_string, version_string)
-        
+
         # Next is the ASCII UAM string.First byte is length again.
         uam_string, data = take_string(data)
         uam = constants.afp_uams.get(uam_string, uam_string)
-        
+
         logging.debug('data: %r', data)
         # Next is the user login name but it is always UTF-8 and the docs say
         # it is an AFPName but it is actually just 2 bytes for the length
@@ -626,14 +630,14 @@ class FPLoginExt(_AFPCommand):
         data = data[3:]
         name = struct.unpack('!%ss' % size, data[:size])[0]
         data = data[size:]
-        
+
         # Next is the Open Directory domain to search for the given username.
         path, data = take_name(data)
-        
+
         # Next is the UAM info. May be a null byte. Or may be the padding to
         # put the UAM on an even byte. How do I know if a pad byte was needed?
-        # For now we ignore UAM info.       
-        
+        # For now we ignore UAM info.
+
         return (command_code, flags, version, uam, user, path, info)
 
     def response(self, data):
@@ -682,15 +686,24 @@ class FPCatSearchExt(_AFPCommand):
         pass
 
 
-
 class FPEnumerateExt2(_AFPCommand):
+    """Lists the contents of a directory."""
     code = 68
+    _request = struct.Struct('!BBhihhhii')
+    _response = struct.Struct('!hhh')
+
     def request(self, data):
-        return struct.unpack('!B', data[:1])
+        parts = self._request.unpack(data[:self._request.size])
+        (command, _, vol_id, dir_id, file_bitmap, dir_bitmap, req_count,
+            start_index, max_reply_size) = parts
+        name, data = take_name(data[self._request.size:])
+
+        return (command, vol_id, dir_id, file_bitmap, dir_bitmap, req_count,
+                start_index, max_reply_size, name)
 
     def response(self, data):
-        pass
-
+        file_bitmap, dir_bitmap, count = self._response.unpack(data[:self._response.size])
+        return file_bitmap, dir_bitmap, count
 
 
 class FPGetExtAttr(_AFPCommand):
@@ -700,7 +713,6 @@ class FPGetExtAttr(_AFPCommand):
 
     def response(self, data):
         pass
-
 
 
 class FPSetExtAttr(_AFPCommand):
@@ -755,8 +767,12 @@ class FPSetACL(_AFPCommand):
 
 class FPAccess(_AFPCommand):
     code = 75
+    _request = struct.Struct('!BBhiH16si')
     def request(self, data):
-        return struct.unpack('!B', data[:1])
+        parts = self._request.unpack(data[:self._request.size])
+        command, _, vol_id, dir_id, bitmap, uuid, access = parts
+        path, data = take_name(data[self._request.size:])
+        return (command, vol_id, dir_id, bitmap, uuid, access, path)
 
     def response(self, data):
         pass
@@ -821,7 +837,7 @@ class AFPName(object):
     UTF8Name = struct.Struct('!BIH')
     # 1 byte type, 1 byte length
     PascalName = struct.Struct('!BB')
-    
+
     def __call__(self, data):
         # All name types start with a byte indicating the type.
         try:
@@ -831,12 +847,10 @@ class AFPName(object):
                 return '', data[:3]
         except struct.error:
             raise BadNameError
-        
-#        try:
+
         if name_type == constants.kFPUTF8Name:
             name_type, encoding, length = self.UTF8Name.unpack(data[:self.UTF8Name.size])
             offset = self.UTF8Name.size + length
-            logging.debug('name_type: %r, encoding: %r, length: %r', name_type, encoding, length)
             parts = struct.unpack('!BIH%ss' % length, data[:offset])
         elif name_type in (constants.kFPShortName, constants.kFPLongName):
             name_type, length = self.PascalName.unpack(data[:self.PascalName.size])
@@ -844,9 +858,7 @@ class AFPName(object):
             parts = struct.unpack('!B%sp' % length, data[:offset])
         else:
             raise BadNameError
-#        except struct.error:
-#            raise BadNameError
-        
+
         # AFP uses null-bytes in the path name as a directory separator.
         name = parts[-1].replace(chr(0), ':')
         # Ummm, the name is either unicode or some crazy Mac encoding that depends
@@ -881,12 +893,12 @@ def make_command_map():
     # Run through all the things in this module and register those which are
     # sub-classes of _AFPCommand (but not _AFPCommand itself).
     import sys
-    
+
     module = sys.modules[__name__]
     names = dir(module)
-    
+
     mapping = {}
-    
+
     for name in names:
         cls = getattr(module, name)
         try:
@@ -897,7 +909,7 @@ def make_command_map():
                     mapping[obj.code] = (name, obj.request, obj.response)
         except TypeError:
             pass
-    
+
     return mapping
 
 

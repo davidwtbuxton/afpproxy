@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from cStringIO import StringIO
 import logging
 import struct
+
 from .constants import (kDSICloseSession, kDSICommand, kDSIGetStatus,
     kDSIOpenSession, kDSITickle, kDSIWrite, kDSIAttention)
 
@@ -30,7 +31,7 @@ DSI_COMMAND_NAMES = {
 class DSIHeader(object):
     __slots__ = ['flags', 'command', 'request_id', 'offset', 'length', 'reserved']
     format = struct.Struct(DSI_HEADER_FMT)
-    
+
     def __init__(self, flags, command, request_id, offset, length, reserved):
         self.flags = flags
         self.command = command
@@ -38,7 +39,7 @@ class DSIHeader(object):
         self.offset = offset
         self.length = length
         self.reserved = reserved
-    
+
     def __iter__(self):
         # Allows one to use dict() to convert the tuple to a dict.
         for key in self.__slots__:
@@ -62,7 +63,7 @@ class DSILogger(object):
         self.buffer = StringIO()
         self.handler = handler or debug_dsi
         assert callable(self.handler)
-        
+
     def __call__(self, addr, data):
         assert self.state >= 0
 
@@ -73,19 +74,19 @@ class DSILogger(object):
                 self.buffer.seek(0)
                 self.buffer.truncate()
                 self.handler(addr, text, self.dsi)
-        
+
         # Parse and buffer a new command.
         if not self.state:
             self.dsi = DSIHeader.unpack(data)
             self.state = self.dsi.length
             # Discard the DSI header.
             data = data[DSIHeader.format.size:]
-        
+
         # Buffer the new data and update the state pointer.
         payload, extra = data[:self.state], data[self.state:]
         self.state = self.state - len(payload)
         self.buffer.write(payload)
-        
+
         # More than one DSI message in this data.
         if extra:
             self(addr, extra)

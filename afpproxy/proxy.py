@@ -1,7 +1,9 @@
-from .dsi import DSILogger
+import logging
+
 from twisted.internet import protocol
 from twisted.protocols import portforward
-import logging
+
+from .dsi import DSILogger
 
 
 class AFPProxyClient(portforward.ProxyClient):
@@ -20,8 +22,7 @@ class AFPProxyClientFactory(portforward.ProxyClientFactory):
 
 class AFPProxyServer(portforward.ProxyServer):
     clientProtocolFactory = AFPProxyClientFactory
-    
-        
+
     def dataReceived(self, data):
         addr = self.transport.client
         self.factory.dsi_logger(addr, data)
@@ -33,4 +34,4 @@ class AFPProxyFactory(portforward.ProxyFactory):
 
     def __init__(self, rhost, rport, handler=None):
         portforward.ProxyFactory.__init__(self, rhost, rport)
-        self.dsi_logger = DSILogger(handler=handler)    
+        self.dsi_logger = DSILogger(handler=handler)

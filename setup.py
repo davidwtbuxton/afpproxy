@@ -1,4 +1,6 @@
 from distutils.core import setup
+import os
+
 import afpproxy
 
 
@@ -12,7 +14,7 @@ setup(
     author_email = 'david@gasmark6.com',
     version = afpproxy.__version__,
     license = 'MIT',
-    url = '',
+    url = 'https://github.com/davidwtbuxton/afpproxy',
     description = 'proxy for the AFP (AppleShare) protocol',
     long_description = read('README.rst'),
     classifiers = [
@@ -22,5 +24,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Topic :: Internet :: Proxy Servers',
     ],
-
+    scripts = ['bin/afpproxy'],
+    packages = ['afpproxy'],
 )

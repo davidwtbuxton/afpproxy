@@ -2,7 +2,10 @@
 AFPproxy
 =========
 
-AFPproxy is a proxy for an AppleShare file server. It is intended to help debug client/server connections on Mac OS X.
+AFPproxy is an MIT licensed proxy for an AppleShare file server. You can use it to help debug client/server connections on Mac OS X, but I wrote it to explore the Twisted networking framework.
+
+When running, the proxy prints details of the client/server communication to stderr.
+
 
 Installation
 =============
@@ -19,22 +22,28 @@ Or install it from PyPI:
 
     pip install afpproxy
 
+
 Usage
 ======
 
-Once installed, or even if you are in the source directory, you can run afpproxy with:
-
-    python -m afpproxy
+Once installed, start the proxy with the ``afpproxy`` command.
 
 By default this proxies your real AFP server on localhost port 548, and accepts connections on port 5548. You then connect to the running afpproxy and will see a description of the commands sent between client and server.
 
 To proxy to a different server give its name or IP address:
 
-    python -m afpproxy example.com
+    afpproxy --host example.com
 
 Or to proxy to a server running on a non-standard port:
 
-    python -m afpproxy example.com 1234
+    afpproxy --host example.com --port 1234
+
+To start a proxy listening for connections on port 1548:
+
+    afpproxy --listen 1548
 
 
+Development
+===========
 
+The source for afpproxy is hosted on GitHub: https://github.com/davidwtbuxton/afpproxy

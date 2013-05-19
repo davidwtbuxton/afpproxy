@@ -2,3 +2,6 @@
 .DS_Store
 ._*
 /work/
+/env/
+/build/
+

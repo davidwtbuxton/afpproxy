@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import unittest
+
 from afpproxy import afp, afpcommands, dsi, proxy
 
 
@@ -14,7 +15,7 @@ class AFPNameTests(unittest.TestCase):
         name, data = afpcommands.take_name('\x01\x08example')
         assert name == 'example'
         assert len(data) == 0
-    
+
     def test_long_name(self):
         name, data = afpcommands.take_name('\x02\x08example')
         assert name == 'example'
