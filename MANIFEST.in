@@ -1,0 +1,4 @@
+include bin/afpproxy
+include README.rst
+include LICENSE
+include requirements.txt

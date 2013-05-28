@@ -4,4 +4,7 @@
 /work/
 /env/
 /build/
+/dist/
+/.*
+/MANIFEST
 

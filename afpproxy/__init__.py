@@ -8,7 +8,7 @@ from afpproxy.proxy import AFPProxyFactory
 from afpproxy.afp import AFPLogger
 
 
-__version__ = '0.1'
+__version__ = '0.1.1'
 
 
 def configure_logging():

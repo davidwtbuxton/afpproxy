@@ -12,15 +12,19 @@ Installation
 
 Requires Python 2.5 or later and Twisted. AFPproxy does not run on Python 3. Mac OS X 10.5 and later include Python and Twisted by default.
 
-You can download and install the source directly:
+You can download and install the source directly::
 
     tar -xf afpproxy-0.1.tar.gz
     cd afpproxy-0.1
     python setup.py install
 
-Or install it from PyPI:
+Or install it from PyPI::
 
     pip install afpproxy
+
+If you don't have Twisted installed, install it. For Python 2.5 install it with::
+
+    pip install 'Twisted<12.2' 'zope.interface<4'
 
 
 Usage
@@ -30,15 +34,15 @@ Once installed, start the proxy with the ``afpproxy`` command.
 
 By default this proxies your real AFP server on localhost port 548, and accepts connections on port 5548. You then connect to the running afpproxy and will see a description of the commands sent between client and server.
 
-To proxy to a different server give its name or IP address:
+To proxy to a different server give its name or IP address::
 
     afpproxy --host example.com
 
-Or to proxy to a server running on a non-standard port:
+Or to proxy to a server running on a non-standard port::
 
     afpproxy --host example.com --port 1234
 
-To start a proxy listening for connections on port 1548:
+To start a proxy listening for connections on port 1548::
 
     afpproxy --listen 1548
 
