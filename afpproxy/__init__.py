@@ -10,25 +10,27 @@ from afpproxy.afp import AFPLogger
 
 
 __version__ = '0.1.1'
+DEFAULT_LOGLEVEL = logging.INFO
 
 
-def configure_logging():
+def configure_logging(loglevel=DEFAULT_LOGLEVEL):
     format = '%(asctime)s %(message)s'
-    logging.basicConfig(level=logging.DEBUG, format=format)
+    logging.basicConfig(level=loglevel, format=format)
 
 
 def usage():
     sys.stderr.write(
         '%(prog)s version %(version)s\n'
-        'Usage: %(prog)s [--host <server>] [--port <port>] [--listen <port>]\n'
+        'Usage: %(prog)s [--debug] [--host <server>] [--port <port>] [--listen <port>]\n'
         % {'prog': 'afpproxy', 'version': __version__}
     )
 
 
 def parse_command_line(argv):
-    opts, args = getopt.getopt(argv, 'h:p:l:', ['help', 'host=', 'port=', 'listen='])
+    opts, args = getopt.getopt(argv, 'h:p:l:',
+        ['help', 'debug', 'host=', 'port=', 'listen='])
 
-    flags = {}
+    flags = {'loglevel': DEFAULT_LOGLEVEL}
 
     for key, value in opts:
         if key in ('--help',):
@@ -40,17 +42,20 @@ def parse_command_line(argv):
             flags['port'] = int(value)
         elif key in ('-l', '--listen'):
             flags['listen'] = int(value)
+        elif key in ('--debug',):
+            flags['loglevel'] = logging.DEBUG
 
     return flags
 
 
 def main():
-    configure_logging()
     try:
         kwargs = parse_command_line(sys.argv[1:])
-    except ValueError:
+    except (ValueError, getopt.GetoptError):
         usage()
         return 1
+
+    configure_logging(kwargs.pop('loglevel', DEFAULT_LOGLEVEL))
 
     run(**kwargs)
 

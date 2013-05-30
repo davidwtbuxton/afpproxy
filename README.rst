@@ -46,6 +46,10 @@ To start a proxy listening for connections on port 1548::
 
     afpproxy --listen 1548
 
+By default afpproxy will log (relatively) meaningful information about the requests and responses. If you want to see the bytes of each and every command use the ``--debug`` flag::
+
+    afpproxy --debug
+
 
 Development
 ===========
