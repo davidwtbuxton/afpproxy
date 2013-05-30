@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import getopt
 import logging
 import sys
@@ -63,6 +64,7 @@ def run(host='localhost', port=548, listen=5548):
     :param port: listening port of server to proxy.
     :param listen: port to listen for incoming connections.
     """
+    # N.B. We create the proxy with an AFPLogger handler.
     logging.info('afpproxy version %s' % __version__)
     reactor.listenTCP(listen, AFPProxyFactory(host, port, handler=AFPLogger()))
 

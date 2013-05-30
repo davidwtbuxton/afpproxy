@@ -9,22 +9,22 @@ class AFPNameTests(unittest.TestCase):
         afpcommands.take_name
         afpcommands.AFPName
         obj = afpcommands.AFPName()
-        assert callable(obj)
+        self.assertTrue(callable(obj))
 
     def test_short_name(self):
         name, data = afpcommands.take_name('\x01\x08example')
-        assert name == 'example'
-        assert len(data) == 0
+        self.assertEqual(name, 'example')
+        self.assertEqual(len(data), 0)
 
     def test_long_name(self):
         name, data = afpcommands.take_name('\x02\x08example')
-        assert name == 'example'
-        assert len(data) == 0
+        self.assertEqual(name, 'example')
+        self.assertEqual(len(data), 0)
 
     def test_utf8_name(self):
         name, data = afpcommands.take_name('\x03\x00\x00\x01\x00\x00\x07example')
-        assert name == 'example'
-        assert len(data) == 0
+        self.assertEqual(name, 'example')
+        self.assertEqual(len(data), 0)
 
 
 if __name__ == "__main__":

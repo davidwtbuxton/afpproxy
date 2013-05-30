@@ -6,19 +6,24 @@ from . import afpcommands
 from . import constants
 
 
-UTF8 = 'UTF-8'
-
-
 class AFPLogger(object):
-    # Pre-cook a map of AFP command codes to Struct instances.
+    """An AFPLogger instance is called repeatedly with 3 arguments: the address
+    of the sender; the AFP command data (comprising any AFP command header and
+    its payload); and the DSI header for the AFP command.
+    """
+    # First byte of the data is the AFP command code.
     _command_code = struct.Struct('!B')
 
     def __init__(self):
+        # As requests arrive we record them so that we can match a subsequent
+        # response with the request that prompted it.
         self._command_history = {}
 
     def __call__(self, addr, data, dsi):
         key = (dsi.request_id, dsi.command)
 
+        # DSICommand means this is an AFP command. Other commands like tickle
+        # we ignore.
         if dsi.command == constants.kDSICommand:
             if dsi.flags:
                 # This is a response.
@@ -31,11 +36,11 @@ class AFPLogger(object):
                     # time it actually is uint32.
                     error = struct.unpack('!i', struct.pack('!I', dsi.error))[0]
                     errname = constants.errors.get(error, error)
-                    logging.debug("%r %r %r", key, error, errname)
+                    logging.info("%r %r %r", key, error, errname)
                 else:
                     # Now we have the request we can understand the response.
                     response = self.response(command_code, data)
-                    logging.debug("%r %r", key, response)
+                    logging.info("%r %r", key, response)
             else:
                 # This is a request.
                 command_code = self._command_code.unpack(data[:1])[0]
@@ -44,13 +49,14 @@ class AFPLogger(object):
                 assert isinstance(request, tuple), command_code
                 assert request[0] == command_code, command_code
 
+                # Record the request so that when a response arrives we know how
+                # to interpret it.
                 self._command_history[key] = request
                 name = afpcommands.commands[command_code][0]
-                logging.debug("%r %r %r", key, name, request)
-
+                logging.info("%r %r %r", key, name, request)
 
     def request(self, command_code, data):
-        """Returns a tuple of (int, ...).
+        """Decodes any AFP request. Returns a tuple.
 
         The first member of the tuple must be an AFP command code.
         """
@@ -58,6 +64,7 @@ class AFPLogger(object):
         return request_func(data)
 
     def response(self, command_code, data):
+        """Decodes any AFP response. Returns a tuple."""
         name, request_func, response_func = afpcommands.commands[command_code]
         return response_func(data)
 

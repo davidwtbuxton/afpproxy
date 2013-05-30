@@ -29,6 +29,7 @@ DSI_COMMAND_NAMES = {
 
 
 class DSIHeader(object):
+    """Represents a DSI command header struct."""
     __slots__ = ['flags', 'command', 'request_id', 'offset', 'length', 'reserved']
     format = struct.Struct(DSI_HEADER_FMT)
 
@@ -57,6 +58,18 @@ class DSIHeader(object):
 
 
 class DSILogger(object):
+    """A DSILogger instance is a call-able that accepts 2 arguments: the address
+    of the sender; and the sent data. It is called repeatedly as new data is
+    received.
+
+    Once the logger has buffered a complete DSI message (along with any payload)
+    it calls its data handler with 3 arguments: the address of the sender; the
+    bytes of the payload; and a DSIHeader instance giving the fields of the DSI
+    struct.
+
+    Because we are interested in actual AFP commands we only call the handler
+    when there is a payload (an actual AFP command).
+    """
     def __init__(self, prefix='', handler=None):
         self.dsi = DSIHeader(0, 0, 0, 0, 0, 0)
         self.state = 0
@@ -67,12 +80,14 @@ class DSILogger(object):
     def __call__(self, addr, data):
         assert self.state >= 0
 
-        # Handle a complete buffered command.
+        # Call the handler with a complete buffered command.
         if not self.state:
             text = self.buffer.getvalue()
             if text:
+                # Reset the buffer for the next command then dispatch this one.
                 self.buffer.seek(0)
                 self.buffer.truncate()
+
                 self.handler(addr, text, self.dsi)
 
         # Parse and buffer a new command.
@@ -93,6 +108,12 @@ class DSILogger(object):
 
 
 def debug_dsi(addr, data, dsi):
+    """A command handler that logs the DSI command itself and ignores any AFP
+    command. This can be used as the handler argument when creating a DSILogger
+    instance.
+
+    See the AFPLogger class for how to handle AFP commands properly.
+    """
     info = dict(dsi)
     info.update({
         'command_name': DSI_COMMAND_NAMES.get(info['command']),
