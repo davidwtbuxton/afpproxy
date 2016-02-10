@@ -83,7 +83,7 @@ class DSILogger(object):
         # Call the handler with a complete buffered command.
         if not self.state:
             text = self.buffer.getvalue()
-            logging.debug(repr(text))
+            logging.debug('%r', text)
             if text:
                 # Reset the buffer for the next command then dispatch this one.
                 self.buffer.seek(0)
